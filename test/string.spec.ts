@@ -12,20 +12,21 @@ type Entity = string;
 type UserData = any;
 
 abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
-  optimize = Genetic.Optimize.Maximize;
-  seed() {
+  public optimize = Genetic.Optimize.Maximize;
+  public seed() {
     function randomString(len: number) {
-      var text = "";
-      var charset = "abcdefghijklmnopqrstuvwxyz";
-      for (var i = 0; i < len; i++)
+      let text = "";
+      const charset = "abcdefghijklmnopqrstuvwxyz";
+      for (let i = 0; i < len; i++) {
         text += charset.charAt(Math.floor(Math.random() * charset.length));
+      }
       return text;
     }
 
     // create random strings that are equal in length to solution
-    return randomString(this.userData["solution"].length);
+    return randomString(this.userData.solution.length);
   }
-  mutate(entity: Entity) {
+  public mutate(entity: Entity) {
     function replaceAt(str: string, index: number, character: string) {
       return (
         str.substr(0, index) + character + str.substr(index + character.length)
@@ -33,7 +34,7 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
     }
 
     // chromosomal drift
-    var i = Math.floor(Math.random() * entity.length);
+    const i = Math.floor(Math.random() * entity.length);
     return replaceAt(
       entity,
       i,
@@ -42,37 +43,37 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
       )
     );
   }
-  crossover(mother: Entity, father: Entity): [Entity, Entity] {
+  public crossover(mother: Entity, father: Entity): [Entity, Entity] {
     // two-point crossover
-    var len = mother.length;
-    var ca = Math.floor(Math.random() * len);
-    var cb = Math.floor(Math.random() * len);
+    const len = mother.length;
+    let ca = Math.floor(Math.random() * len);
+    let cb = Math.floor(Math.random() * len);
     if (ca > cb) {
-      var tmp = cb;
+      const tmp = cb;
       cb = ca;
       ca = tmp;
     }
 
-    var son =
+    const son =
       father.substr(0, ca) + mother.substr(ca, cb - ca) + father.substr(cb);
-    var daughter =
+    const daughter =
       mother.substr(0, ca) + father.substr(ca, cb - ca) + mother.substr(cb);
 
     return [son, daughter];
   }
-  fitness(entity: Entity) {
-    var fitness = 0;
+  public fitness(entity: Entity) {
+    let fitness = 0;
 
-    var i;
+    let i;
     for (i = 0; i < entity.length; ++i) {
       // increase fitness for each character that matches
-      if (entity[i] == this.userData["solution"][i]) fitness += 1;
+      if (entity[i] == this.userData.solution[i]) { fitness += 1; }
 
       // award fractions of a point as we get warmer
       fitness +=
         (127 -
           Math.abs(
-            entity.charCodeAt(i) - this.userData["solution"].charCodeAt(i)
+            entity.charCodeAt(i) - this.userData.solution.charCodeAt(i)
           )) /
         50;
     }
@@ -80,13 +81,13 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
     return fitness;
   }
 
-  generation(
+  public generation(
     pop: Population<Entity>,
     generation: number,
     stats: Stats
   ): boolean {
     // stop running once we've reached the solution
-    return pop[0].entity != this.userData["solution"];
+    return pop[0].entity != this.userData.solution;
   }
 }
 
@@ -106,16 +107,16 @@ function solveTest(
       solution: "thisisthesolution",
     };
     class CustomPhraseGenetic extends PhraseGenetic {
-      select1 = singleSelection;
-      select2 = pairWiseSelection;
-      notification(
+      public select1 = singleSelection;
+      public select2 = pairWiseSelection;
+      public notification(
         pop: Population<Entity>,
         generation: number,
         stats: Stats,
         isFinished: boolean
       ) {
         if (isFinished) {
-          expect(pop[0].entity).toBe(this.userData["solution"]);
+          expect(pop[0].entity).toBe(this.userData.solution);
           done();
         }
       }
@@ -133,8 +134,8 @@ describe("Genetic String Solver", function() {
     mutation: 0.3,
   };
 
-  for (let singleSelectionName in Genetic.Select1) {
-    for (let pairWiseSelectionName in Genetic.Select2) {
+  for (const singleSelectionName in Genetic.Select1) {
+    for (const pairWiseSelectionName in Genetic.Select2) {
       solveTest(
         singleSelectionName as any,
         pairWiseSelectionName as any,

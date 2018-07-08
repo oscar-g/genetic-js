@@ -140,7 +140,7 @@
         "mocha-no-side-effect-code": false,
         "mocha-unneeded-done": true,
         "new-parens": true,
-        "newspaper-order": true,
+        "newspaper-order": false,
         "no-angle-bracket-type-assertion": false,
         "no-any": false,
         "no-arg": true,

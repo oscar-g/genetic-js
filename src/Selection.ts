@@ -1,9 +1,9 @@
 import { Genetic } from "./Genetic";
 
-export type Population<Entity> = Array<{
+export type Population<Entity> = {
   fitness: number;
   entity: Entity;
-}>;
+}[];
 
 export type SingleSelection<Entity> = (pop: Population<Entity>) => Entity;
 
@@ -16,20 +16,20 @@ export const Select1 = {
     this: Genetic<Entity, any>,
     pop: Population<Entity>
   ): Entity {
-    var n = pop.length;
-    var a = pop[Math.floor(Math.random() * n)];
-    var b = pop[Math.floor(Math.random() * n)];
+    let n = pop.length;
+    let a = pop[Math.floor(Math.random() * n)];
+    let b = pop[Math.floor(Math.random() * n)];
     return this.optimize(a.fitness, b.fitness) ? a.entity : b.entity;
   },
   Tournament3: function<Entity>(
     this: Genetic<Entity, any>,
     pop: Population<Entity>
   ): Entity {
-    var n = pop.length;
-    var a = pop[Math.floor(Math.random() * n)];
-    var b = pop[Math.floor(Math.random() * n)];
-    var c = pop[Math.floor(Math.random() * n)];
-    var best = this.optimize(a.fitness, b.fitness) ? a : b;
+    let n = pop.length;
+    let a = pop[Math.floor(Math.random() * n)];
+    let b = pop[Math.floor(Math.random() * n)];
+    let c = pop[Math.floor(Math.random() * n)];
+    let best = this.optimize(a.fitness, b.fitness) ? a : b;
     best = this.optimize(best.fitness, c.fitness) ? best : c;
     return best.entity;
   },
@@ -49,10 +49,10 @@ export const Select1 = {
     this: Genetic<Entity, any>,
     pop: Population<Entity>
   ): Entity {
-    this.internalGenState["rlr"] = this.internalGenState["rlr"] || 0;
+    this.internalGenState.rlr = this.internalGenState.rlr || 0;
     return pop[
       Math.floor(
-        Math.random() * Math.min(pop.length, this.internalGenState["rlr"]++)
+        Math.random() * Math.min(pop.length, this.internalGenState.rlr++)
       )
     ].entity;
   },
@@ -60,8 +60,8 @@ export const Select1 = {
     this: Genetic<Entity, any>,
     pop: Population<Entity>
   ): Entity {
-    this.internalGenState["seq"] = this.internalGenState["seq"] || 0;
-    return pop[this.internalGenState["seq"]++ % pop.length].entity;
+    this.internalGenState.seq = this.internalGenState.seq || 0;
+    return pop[this.internalGenState.seq++ % pop.length].entity;
   },
 };
 
