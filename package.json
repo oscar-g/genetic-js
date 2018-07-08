@@ -1,29 +1,37 @@
 {
-  "name": "genetic-js",
-  "version": "0.1.14",
+  "name": "@glavin001/genetic-js",
+  "version": "0.1.0",
   "description": "Advanced genetic and evolutionary algorithm library",
   "main": "lib/genetic.js",
+  "typings": "lib/genetic.d.ts",
   "scripts": {
-    "test": "make check"
+    "build": "tsc",
+    "jest": "jest",
+    "test": "npm run build && npm run jest"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/subprotocol/genetic-js"
+    "url": "git://github.com/Glavin001/genetic-js"
   },
   "bugs": {
-    "url": "https://github.com/subprotocol/genetic-js/issues"
+    "url": "https://github.com/Glavin001/genetic-js/issues"
   },
   "keywords": [
     "genetic",
     "evolution",
     "algorithm"
   ],
-  "author": "subprotocol <smprotocol@gmail.com> (http://subprotocol.com/)",
+  "author": "Glavin Wiechert",
   "license": "BSD",
   "readmeFilename": "README.md",
   "devDependencies": {
+    "@types/jest": "^23.1.4",
+    "@types/node": "^10.5.2",
     "browserify": "~5.10.0",
-    "uglify-js": "~2.4.15",
-	"mocha": "~1.21.4"
+    "jest": "^23.3.0",
+    "mocha": "~1.21.4",
+    "ts-jest": "^23.0.0",
+    "typescript": "^2.9.2",
+    "uglify-js": "~2.4.15"
   }
 }
