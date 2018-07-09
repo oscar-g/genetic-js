@@ -1,6 +1,6 @@
 {
   "name": "@glavin001/genetic-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Advanced genetic and evolutionary algorithm library",
   "main": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
