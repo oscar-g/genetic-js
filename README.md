@@ -1,5 +1,7 @@
 # Genetic.js
 
+[![Build Status](https://travis-ci.com/Glavin001/genetic-js.svg?branch=master)](https://travis-ci.com/Glavin001/genetic-js)
+
 Advanced genetic and evolutionary algorithm library written in Javascript by [Sub Protocol](http://subprotocol.com/).
 
 

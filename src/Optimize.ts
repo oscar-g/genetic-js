@@ -1,10 +1,9 @@
 export type OptimizeFun = (fitnessA: number, fitnessB: number) => boolean;
 
-export class Optimize {
-  public static Maximize(a: number, b: number) {
-    return a >= b;
-  }
-  public static Minimize(a: number, b: number) {
-    return a < b;
-  }
-}
+export const Maximize: OptimizeFun = (first: number, second: number) => {
+  return first >= second;
+};
+
+export const Minimize: OptimizeFun = (first: number, second: number) => {
+  return first < second;
+};

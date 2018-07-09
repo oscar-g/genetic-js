@@ -1,3 +1,4 @@
+// tslint:disable:no-function-expression object-literal-sort-keys
 import { Genetic } from "./Genetic";
 
 export type Population<Entity> = {
@@ -16,21 +17,23 @@ export const Select1 = {
     this: Genetic<Entity, any>,
     pop: Population<Entity>
   ): Entity {
-    let n = pop.length;
-    let a = pop[Math.floor(Math.random() * n)];
-    let b = pop[Math.floor(Math.random() * n)];
-    return this.optimize(a.fitness, b.fitness) ? a.entity : b.entity;
+    const popSize = pop.length;
+    const firstPick = pop[Math.floor(Math.random() * popSize)];
+    const secondPick = pop[Math.floor(Math.random() * popSize)];
+    return this.optimize(firstPick.fitness, secondPick.fitness)
+      ? firstPick.entity
+      : secondPick.entity;
   },
   Tournament3: function<Entity>(
     this: Genetic<Entity, any>,
     pop: Population<Entity>
   ): Entity {
-    let n = pop.length;
-    let a = pop[Math.floor(Math.random() * n)];
-    let b = pop[Math.floor(Math.random() * n)];
-    let c = pop[Math.floor(Math.random() * n)];
-    let best = this.optimize(a.fitness, b.fitness) ? a : b;
-    best = this.optimize(best.fitness, c.fitness) ? best : c;
+    const popSize = pop.length;
+    const firstPick = pop[Math.floor(Math.random() * popSize)];
+    const secondPick = pop[Math.floor(Math.random() * popSize)];
+    const thirdPick = pop[Math.floor(Math.random() * popSize)];
+    let best = this.optimize(firstPick.fitness, secondPick.fitness) ? firstPick : secondPick;
+    best = this.optimize(best.fitness, thirdPick.fitness) ? best : thirdPick;
     return best.entity;
   },
   Fittest: function<Entity>(

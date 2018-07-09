@@ -6,18 +6,18 @@ import {
   SingleSelection,
   PairWiseSelection,
 } from "../src/Selection";
-import { Stats, Configuration } from "../src";
+import { Stats, Configuration, Optimize } from "../src";
 
 type Entity = string;
 type UserData = any;
 
 abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
-  public optimize = Genetic.Optimize.Maximize;
+  public optimize: Optimize.OptimizeFun = Genetic.Optimize.Maximize;
   public seed() {
     function randomString(len: number) {
       let text = "";
       const charset = "abcdefghijklmnopqrstuvwxyz";
-      for (let i = 0; i < len; i++) {
+      for (let charIndex = 0; charIndex < len; charIndex++) {
         text += charset.charAt(Math.floor(Math.random() * charset.length));
       }
       return text;
@@ -34,12 +34,13 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
     }
 
     // chromosomal drift
-    const i = Math.floor(Math.random() * entity.length);
+    const replaceIndex = Math.floor(Math.random() * entity.length);
     return replaceAt(
       entity,
-      i,
+      replaceIndex,
       String.fromCharCode(
-        entity.charCodeAt(i) + (Math.floor(Math.random() * 2) ? 1 : -1)
+        entity.charCodeAt(replaceIndex) +
+          (Math.floor(Math.random() * 2) ? 1 : -1)
       )
     );
   }
@@ -63,17 +64,18 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
   }
   public fitness(entity: Entity) {
     let fitness = 0;
-
-    let i;
-    for (i = 0; i < entity.length; ++i) {
+    for (let entityIndex = 0; entityIndex < entity.length; ++entityIndex) {
       // increase fitness for each character that matches
-      if (entity[i] == this.userData.solution[i]) { fitness += 1; }
+      if (entity[entityIndex] === this.userData.solution[entityIndex]) {
+        fitness += 1;
+      }
 
       // award fractions of a point as we get warmer
       fitness +=
         (127 -
           Math.abs(
-            entity.charCodeAt(i) - this.userData.solution.charCodeAt(i)
+            entity.charCodeAt(entityIndex) -
+              this.userData.solution.charCodeAt(entityIndex)
           )) /
         50;
     }
@@ -87,7 +89,7 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
     stats: Stats
   ): boolean {
     // stop running once we've reached the solution
-    return pop[0].entity != this.userData.solution;
+    return pop[0].entity !== this.userData.solution;
   }
 }
 
@@ -101,20 +103,23 @@ function solveTest(
   const pairWiseSelection: PairWiseSelection<Entity> =
     Genetic.Select2[pairWiseSelectionName];
 
-  it(singleSelectionName + ", " + pairWiseSelectionName, function(done) {
+  it(singleSelectionName + ", " + pairWiseSelectionName, done => {
     expect.assertions(1);
     const userData: UserData = {
       solution: "thisisthesolution",
     };
     class CustomPhraseGenetic extends PhraseGenetic {
-      public select1 = singleSelection;
-      public select2 = pairWiseSelection;
-      public notification(
-        pop: Population<Entity>,
-        generation: number,
-        stats: Stats,
-        isFinished: boolean
-      ) {
+      public select1: SingleSelection<Entity> = singleSelection;
+      public select2: PairWiseSelection<Entity> = pairWiseSelection;
+      public notification({
+        population: pop,
+        isFinished,
+      }: {
+        population: Population<Entity>;
+        generation: number;
+        stats: Stats;
+        isFinished: boolean;
+      }) {
         if (isFinished) {
           expect(pop[0].entity).toBe(this.userData.solution);
           done();
@@ -126,21 +131,20 @@ function solveTest(
   });
 }
 
-describe("Genetic String Solver", function() {
+describe("Genetic String Solver", () => {
   const config: Partial<Configuration> = {
-    iterations: 2000,
-    size: 20,
     crossover: 0.4,
+    iterations: 2000,
     mutation: 0.3,
+    size: 20,
   };
-
-  for (const singleSelectionName in Genetic.Select1) {
-    for (const pairWiseSelectionName in Genetic.Select2) {
+  Object.keys(Genetic.Select1).forEach(singleSelectionName => {
+    Object.keys(Genetic.Select2).forEach(pairWiseSelectionName => {
       solveTest(
         singleSelectionName as any,
         pairWiseSelectionName as any,
         config
       );
-    }
-  }
+    });
+  });
 });

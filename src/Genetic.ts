@@ -1,5 +1,6 @@
 import { Serialization } from "./Serialization";
-import { Optimize, OptimizeFun } from "./Optimize";
+import * as Optimize from "./Optimize";
+
 import {
   Select1,
   Select2,
@@ -29,12 +30,16 @@ export interface InternalGenState {
   seq: number;
 }
 
-function Clone(obj: any) {
-  if (obj == null || typeof obj != "object") { return obj; }
+function clone(obj: any) {
+  // tslint:disable-next-line:triple-equals
+  if (obj == null || typeof obj != "object") {
+    return obj;
+  }
   return JSON.parse(JSON.stringify(obj));
 }
 
 function addslashes(str: string) {
+  // tslint:disable-next-line:no-octal-literal
   return str.replace(/[\\"']/g, "\\$&").replace(/\u0000/g, "\\0");
 }
 
@@ -61,16 +66,16 @@ export abstract class Genetic<Entity, UserData> {
   }
 
   protected defaultConfiguration: Configuration = {
-    size: 250,
     crossover: 0.9,
-    mutation: 0.2,
-    iterations: 100,
     fittestAlwaysSurvives: true,
+    iterations: 100,
     maxResults: 100,
-    webWorkers: true,
+    mutation: 0.2,
+    size: 250,
     skip: 0,
+    webWorkers: true,
   };
-  public abstract optimize: OptimizeFun;
+  public abstract optimize:  Optimize.OptimizeFun;
   protected abstract seed(): Entity;
   protected abstract mutate(entity: Entity): Entity;
   protected abstract crossover(
@@ -83,31 +88,34 @@ export abstract class Genetic<Entity, UserData> {
     generation: number,
     stats: Stats
   ): boolean;
-  protected abstract notification(
-    pop: Population<Entity>,
-    generation: number,
-    stats: Stats,
-    isFinished: boolean
-  ): void;
+  protected abstract notification(notification: {
+    population: Population<Entity>;
+    generation: number;
+    stats: Stats;
+    isFinished: boolean;
+  }): void;
   protected abstract select1: SingleSelection<Entity>;
   protected abstract select2: PairWiseSelection<Entity>;
 
+  // tslint:disable-next-line:max-func-body-length
   public start() {
-    const self = this;
-
     const mutateOrNot = (entity: Entity) => {
       // applies mutation based on mutation probability
       return Math.random() <= this.configuration.mutation && this.mutate
-        ? this.mutate(Clone(entity))
+        ? this.mutate(clone(entity))
         : entity;
     };
 
     // seed the population
-    for (let i = 0; i < this.configuration.size; ++i) {
-      this.entities.push(Clone(this.seed()));
+    for (let currSeed = 0; currSeed < this.configuration.size; ++currSeed) {
+      this.entities.push(clone(this.seed()));
     }
 
-    for (let i = 0; i < this.configuration.iterations; ++i) {
+    for (
+      let currIteration = 0;
+      currIteration < this.configuration.iterations;
+      ++currIteration
+    ) {
       // reset for each generation
       this.internalGenState = {
         rlr: 0,
@@ -115,79 +123,82 @@ export abstract class Genetic<Entity, UserData> {
       };
 
       // score and sort
-      let pop = this.entities
-        .map(function(entity) {
-          return { fitness: self.fitness(entity), entity: entity };
+      const pop = this.entities
+        .map(entity => {
+          return { fitness: this.fitness(entity), entity: entity };
         })
-        .sort(function(a, b) {
-          return self.optimize(a.fitness, b.fitness) ? -1 : 1;
+        .sort((entityA, entityB) => {
+          return this.optimize(entityA.fitness, entityB.fitness) ? -1 : 1;
         });
 
       // generation notification
-      let mean =
-        pop.reduce(function(a, b) {
-          return a + b.fitness;
+      const mean =
+        pop.reduce((currMean, popItem) => {
+          return currMean + popItem.fitness;
         }, 0) / pop.length;
-      let stdev = Math.sqrt(
+      const stdev = Math.sqrt(
         pop
-          .map(function(a) {
-            return (a.fitness - mean) * (a.fitness - mean);
+          .map(popItem => {
+            return (popItem.fitness - mean) * (popItem.fitness - mean);
           })
-          .reduce(function(a, b) {
-            return a + b;
+          .reduce((currStdev, popItem) => {
+            return currStdev + popItem;
           }, 0) / pop.length
       );
 
-      let stats = {
+      const stats = {
         maximum: pop[0].fitness,
-        minimum: pop[pop.length - 1].fitness,
         mean: mean,
+        minimum: pop[pop.length - 1].fitness,
         stdev: stdev,
       };
 
-      let r = this.generation ? this.generation(pop, i, stats) : true;
-      let isFinished =
-        (typeof r != "undefined" && !r) ||
-        i == this.configuration.iterations - 1;
+      const foundSolution = this.generation
+        ? this.generation(pop, currIteration, stats)
+        : true;
+      const isFinished =
+        !foundSolution || currIteration === this.configuration.iterations - 1;
 
       const shouldSendNotification: boolean =
         this.notification &&
         (isFinished ||
-          this.configuration.skip == 0 ||
-          i % this.configuration.skip == 0);
+          this.configuration.skip === 0 ||
+          currIteration % this.configuration.skip === 0);
       if (shouldSendNotification) {
-        this.sendNotification(
-          pop.slice(0, this.configuration.maxResults),
-          i,
+        this.sendNotification({
+          generation: currIteration,
+          isFinished,
+          population: pop.slice(0, this.configuration.maxResults),
           stats,
-          isFinished
-        );
+        });
       }
 
-      if (isFinished) { break; }
+      if (isFinished) {
+        break;
+      }
 
       // crossover and mutate
-      let newPop = [];
+      const newPop = [];
 
       if (this.configuration.fittestAlwaysSurvives) {
         // lets the best solution fall through
         newPop.push(pop[0].entity);
       }
 
-      while (newPop.length < self.configuration.size) {
+      while (newPop.length < this.configuration.size) {
         if (
           this.crossover && // if there is a crossover function
           Math.random() <= this.configuration.crossover && // base crossover on specified probability
-          newPop.length + 1 < self.configuration.size // keeps us from going 1 over the max population size
+          newPop.length + 1 < this.configuration.size // keeps us from going 1 over the max population size
         ) {
-          let parents = this.select2(pop);
-          let children = this.crossover(
-            Clone(parents[0]),
-            Clone(parents[1])
+          const parents = this.select2(pop);
+          const children = this.crossover(
+            clone(parents[0]),
+            clone(parents[1])
           ).map(mutateOrNot);
           newPop.push(children[0], children[1]);
         } else {
-          newPop.push(mutateOrNot(self.select1(pop)));
+          newPop.push(mutateOrNot(this.select1(pop)));
         }
       }
 
@@ -195,28 +206,34 @@ export abstract class Genetic<Entity, UserData> {
     }
   }
 
-  private sendNotification(
-    pop: Population<Entity>,
-    generation: number,
-    stats: Stats,
-    isFinished: boolean
-  ) {
+  private sendNotification({
+    population: pop,
+    generation,
+    stats,
+    isFinished,
+  }: {
+    population: Population<Entity>;
+    generation: number;
+    stats: Stats;
+    isFinished: boolean;
+  }) {
     const response = {
-      pop: pop.map(Serialization.stringify),
       generation: generation,
-      stats: stats,
       isFinished: isFinished,
+      pop: pop.map(Serialization.stringify),
+      stats: stats,
     };
 
     // self declared outside of scope
-    this.notification(
-      response.pop.map(Serialization.parse),
-      response.generation,
-      response.stats,
-      response.isFinished
-    );
+    this.notification({
+      generation: response.generation,
+      isFinished: response.isFinished,
+      population: response.pop.map(Serialization.parse),
+      stats: response.stats,
+    });
   }
 
+  // tslint:disable-next-line:max-func-body-length
   public evolve(): void {
     this.start();
 
