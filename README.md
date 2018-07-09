@@ -29,8 +29,9 @@ npm install @glavin001/genetic-js
 ## Population Functions
 
 The genetic-js interface exposes a few simple concepts and primitives, you just fill in the details/features you want to use.
+
 | Function | Return Type | Required | Description
-| ----------------------------------------- | ------------------------ | ---------- | -----------
+| -------- | ----------- | -------- | -----------
 | seed() | Individual | Yes | Called to create an individual, can be of any type (int, float, string, array, object)
 | fitness(individual) | Float | Yes | Computes a fitness score for an individual
 | mutate(individual) | Individual | Optional | Called when an individual has been selected for mutation
