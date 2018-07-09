@@ -1,5 +1,6 @@
 import { Serialization } from "./Serialization";
 import * as Optimize from "./Optimize";
+import { asyncLooper } from "./asyncLooper";
 
 import {
   Select1,
@@ -36,11 +37,6 @@ function clone(obj: any) {
     return obj;
   }
   return JSON.parse(JSON.stringify(obj));
-}
-
-function addslashes(str: string) {
-  // tslint:disable-next-line:no-octal-literal
-  return str.replace(/[\\"']/g, "\\$&").replace(/\u0000/g, "\\0");
 }
 
 export { Optimize, Serialization, Select1, Select2 };
@@ -83,123 +79,134 @@ export abstract class Genetic<Entity, UserData> {
     mother: Entity,
     father: Entity
   ): [Entity, Entity];
-  protected abstract fitness(entity: Entity): number;
+  protected abstract fitness(entity: Entity): number | Promise<number>;
   protected abstract shouldContinue(state: GeneticState<Entity>): boolean;
   protected abstract notification(notification: Notification<Entity>): void;
   protected abstract select1: SingleSelection<Entity>;
   protected abstract select2: PairWiseSelection<Entity>;
 
-  // tslint:disable-next-line:max-func-body-length
-  public start() {
-    const mutateOrNot = (entity: Entity) => {
-      // applies mutation based on mutation probability
-      return Math.random() <= this.configuration.mutation && this.mutate
-        ? this.mutate(clone(entity))
-        : entity;
-    };
+  private mutateOrNot = (entity: Entity) => {
+    // applies mutation based on mutation probability
+    return Math.random() <= this.configuration.mutation && this.mutate
+      ? this.mutate(clone(entity))
+      : entity;
+  }
 
+  // tslint:disable-next-line:max-func-body-length
+  public async evolve(): Promise<void> {
     // seed the population
     for (let currSeed = 0; currSeed < this.configuration.size; ++currSeed) {
       this.entities.push(clone(this.seed()));
     }
 
-    for (
-      let currIteration = 0;
-      currIteration < this.configuration.iterations;
-      ++currIteration
-    ) {
-      // reset for each generation
-      this.internalGenState = {
-        rlr: 0,
-        seq: 0,
-      };
+    return await asyncLooper(
+      currIteration => {
+        return currIteration < this.configuration.iterations;
+      },
+      // tslint:disable-next-line:max-func-body-length
+      async (currIteration, breakFn) => {
+        try {
+          // reset for each generation
+          this.internalGenState = {
+            rlr: 0,
+            seq: 0,
+          };
 
-      // score and sort
-      const pop = this.entities
-        .map(entity => {
-          return { fitness: this.fitness(entity), entity: entity };
-        })
-        .sort((entityA, entityB) => {
-          return this.optimize(entityA.fitness, entityB.fitness) ? -1 : 1;
-        });
+          // score and sort
+          const pop = await Promise.all(
+            this.entities.map(async entity => {
+              const fitness = await this.fitness(entity);
+              return { fitness, entity: entity };
+            })
+          ).then(unsortedPopulation => {
+            return unsortedPopulation.sort((entityA, entityB) => {
+              return this.optimize(entityA.fitness, entityB.fitness) ? -1 : 1;
+            });
+          });
 
-      // generation notification
-      const mean =
-        pop.reduce((currMean, popItem) => {
-          return currMean + popItem.fitness;
-        }, 0) / pop.length;
-      const stdev = Math.sqrt(
-        pop
-          .map(popItem => {
-            return (popItem.fitness - mean) * (popItem.fitness - mean);
-          })
-          .reduce((currStdev, popItem) => {
-            return currStdev + popItem;
-          }, 0) / pop.length
-      );
+          // generation notification
+          const mean =
+            pop.reduce((currMean, popItem) => {
+              return currMean + popItem.fitness;
+            }, 0) / pop.length;
+          const stdev = Math.sqrt(
+            pop
+              .map(popItem => {
+                return (popItem.fitness - mean) * (popItem.fitness - mean);
+              })
+              .reduce((currStdev, popItem) => {
+                return currStdev + popItem;
+              }, 0) / pop.length
+          );
 
-      const stats = {
-        maximum: pop[0].fitness,
-        mean: mean,
-        minimum: pop[pop.length - 1].fitness,
-        stdev: stdev,
-      };
+          const stats = {
+            maximum: pop[0].fitness,
+            mean: mean,
+            minimum: pop[pop.length - 1].fitness,
+            stdev: stdev,
+          };
 
-      const shouldContinue = this.shouldContinue
-        ? this.shouldContinue({
-            generation: currIteration,
-            population: pop,
-            stats,
-          })
-        : true;
-      const isFinished =
-        !shouldContinue || currIteration === this.configuration.iterations - 1;
+          const shouldContinue = this.shouldContinue
+            ? this.shouldContinue({
+                generation: currIteration,
+                population: pop,
+                stats,
+              })
+            : true;
+          const isFinished =
+            !shouldContinue ||
+            currIteration === this.configuration.iterations - 1;
 
-      const shouldSendNotification: boolean =
-        this.notification &&
-        (isFinished ||
-          this.configuration.skip === 0 ||
-          currIteration % this.configuration.skip === 0);
-      if (shouldSendNotification) {
-        this.sendNotification({
-          generation: currIteration,
-          isFinished,
-          population: pop.slice(0, this.configuration.maxResults),
-          stats,
-        });
-      }
+          const shouldSendNotification: boolean =
+            this.notification &&
+            (isFinished ||
+              this.configuration.skip === 0 ||
+              currIteration % this.configuration.skip === 0);
+          if (shouldSendNotification) {
+            this.sendNotification({
+              generation: currIteration,
+              isFinished,
+              population: pop.slice(0, this.configuration.maxResults),
+              stats,
+            });
+          }
 
-      if (isFinished) {
-        break;
-      }
+          if (isFinished) {
+            breakFn();
+            return;
+          }
 
-      // crossover and mutate
-      const newPop = [];
+          // crossover and mutate
+          const newPop = [];
 
-      if (this.configuration.fittestAlwaysSurvives) {
-        // lets the best solution fall through
-        newPop.push(pop[0].entity);
-      }
+          if (this.configuration.fittestAlwaysSurvives) {
+            // lets the best solution fall through
+            newPop.push(pop[0].entity);
+          }
 
-      while (newPop.length < this.configuration.size) {
-        if (
-          this.crossover && // if there is a crossover function
-          Math.random() <= this.configuration.crossover && // base crossover on specified probability
-          newPop.length + 1 < this.configuration.size // keeps us from going 1 over the max population size
-        ) {
-          const parents = this.select2(pop);
-          const children = this.crossover(
-            clone(parents[0]),
-            clone(parents[1])
-          ).map(mutateOrNot);
-          newPop.push(children[0], children[1]);
-        } else {
-          newPop.push(mutateOrNot(this.select1(pop)));
+          while (newPop.length < this.configuration.size) {
+            if (
+              this.crossover && // if there is a crossover function
+              Math.random() <= this.configuration.crossover && // base crossover on specified probability
+              newPop.length + 1 < this.configuration.size // keeps us from going 1 over the max population size
+            ) {
+              const parents = this.select2(pop);
+              const children = this.crossover(
+                clone(parents[0]),
+                clone(parents[1])
+              ).map(this.mutateOrNot);
+              newPop.push(children[0], children[1]);
+            } else {
+              newPop.push(this.mutateOrNot(this.select1(pop)));
+            }
+          }
+          this.entities = newPop;
+        } catch (error) {
+          console.error(error);
+          return Promise.reject(error);
         }
       }
-
-      this.entities = newPop;
-    }
+    );
   }
 
   private sendNotification({
@@ -222,10 +229,6 @@ export abstract class Genetic<Entity, UserData> {
       population: response.population.map(Serialization.parse),
       stats: response.stats,
     });
-  }
-
-  public evolve(): void {
-    this.start();
   }
 }
 

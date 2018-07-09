@@ -79,8 +79,9 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
           )) /
         50;
     }
-
-    return fitness;
+    return new Promise<number>((resolve, reject) => {
+      setTimeout(() => resolve(fitness), 0);
+    });
   }
 
   public shouldContinue({
@@ -102,9 +103,8 @@ function solveTest(
     Genetic.Select1[singleSelectionName];
   const pairWiseSelection: PairWiseSelection<Entity> =
     Genetic.Select2[pairWiseSelectionName];
-  const title = singleSelectionName + ", " + pairWiseSelectionName;
-  it(title, done => {
-    jest.setTimeout(10000);
+
+  it(singleSelectionName + ", " + pairWiseSelectionName, done => {
     expect.assertions(1);
     const userData: UserData = {
       solution: "thisisthesolution",
@@ -114,7 +114,6 @@ function solveTest(
       public select2: PairWiseSelection<Entity> = pairWiseSelection;
       public notification({
         population: pop,
-        generation,
         isFinished,
       }: {
         population: Population<Entity>;
@@ -129,7 +128,7 @@ function solveTest(
       }
     }
     const genetic = new CustomPhraseGenetic(config, userData);
-    return genetic.evolve();
+    genetic.evolve();
   });
 }
 
@@ -140,16 +139,13 @@ describe("Genetic String Solver", () => {
     mutation: 0.3,
     size: 20,
   };
-  const singleSelectionName = "Tournament3";
-  const pairWiseSelectionName = "Tournament3";
-  solveTest(singleSelectionName as any, pairWiseSelectionName as any, config);
-  // Object.keys(Genetic.Select1).forEach(singleSelectionName => {
-  //   Object.keys(Genetic.Select2).forEach(pairWiseSelectionName => {
-  //     solveTest(
-  //       singleSelectionName as any,
-  //       pairWiseSelectionName as any,
-  //       config
-  //     );
-  //   });
-  // });
+  Object.keys(Genetic.Select1).forEach(singleSelectionName => {
+    Object.keys(Genetic.Select2).forEach(pairWiseSelectionName => {
+      solveTest(
+        singleSelectionName as any,
+        pairWiseSelectionName as any,
+        config
+      );
+    });
+  });
 });
