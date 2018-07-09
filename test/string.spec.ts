@@ -6,7 +6,7 @@ import {
   SingleSelection,
   PairWiseSelection,
 } from "../src/Selection";
-import { Stats, Configuration, Optimize } from "../src";
+import { Stats, Configuration, Optimize, GeneticState } from "../src";
 
 type Entity = string;
 type UserData = {
@@ -85,11 +85,11 @@ abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
     return fitness;
   }
 
-  public generation(
-    pop: Population<Entity>,
-    generation: number,
-    stats: Stats
-  ): boolean {
+  public shouldContinue({
+    population: pop,
+    generation,
+    stats,
+  }: GeneticState<Entity>): boolean {
     // stop running once we've reached the solution
     return pop[0].entity !== this.userData.solution;
   }

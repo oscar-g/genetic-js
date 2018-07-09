@@ -75,7 +75,8 @@ export abstract class Genetic<Entity, UserData> {
     skip: 0,
     webWorkers: true,
   };
-  public abstract optimize:  Optimize.OptimizeFun;
+
+  public abstract optimize: Optimize.OptimizeFun;
   protected abstract seed(): Entity;
   protected abstract mutate(entity: Entity): Entity;
   protected abstract crossover(
@@ -83,17 +84,8 @@ export abstract class Genetic<Entity, UserData> {
     father: Entity
   ): [Entity, Entity];
   protected abstract fitness(entity: Entity): number;
-  protected abstract generation(
-    pop: Population<Entity>,
-    generation: number,
-    stats: Stats
-  ): boolean;
-  protected abstract notification(notification: {
-    population: Population<Entity>;
-    generation: number;
-    stats: Stats;
-    isFinished: boolean;
-  }): void;
+  protected abstract shouldContinue(state: GeneticState<Entity>): boolean;
+  protected abstract notification(notification: Notification<Entity>): void;
   protected abstract select1: SingleSelection<Entity>;
   protected abstract select2: PairWiseSelection<Entity>;
 
@@ -153,11 +145,15 @@ export abstract class Genetic<Entity, UserData> {
         stdev: stdev,
       };
 
-      const foundSolution = this.generation
-        ? this.generation(pop, currIteration, stats)
+      const shouldContinue = this.shouldContinue
+        ? this.shouldContinue({
+            generation: currIteration,
+            population: pop,
+            stats,
+          })
         : true;
       const isFinished =
-        !foundSolution || currIteration === this.configuration.iterations - 1;
+        !shouldContinue || currIteration === this.configuration.iterations - 1;
 
       const shouldSendNotification: boolean =
         this.notification &&
@@ -207,20 +203,15 @@ export abstract class Genetic<Entity, UserData> {
   }
 
   private sendNotification({
-    population: pop,
+    population,
     generation,
     stats,
     isFinished,
-  }: {
-    population: Population<Entity>;
-    generation: number;
-    stats: Stats;
-    isFinished: boolean;
-  }) {
+  }: Notification<Entity>) {
     const response = {
       generation: generation,
       isFinished: isFinished,
-      pop: pop.map(Serialization.stringify),
+      population: population.map(Serialization.stringify),
       stats: stats,
     };
 
@@ -228,76 +219,25 @@ export abstract class Genetic<Entity, UserData> {
     this.notification({
       generation: response.generation,
       isFinished: response.isFinished,
-      population: response.pop.map(Serialization.parse),
+      population: response.population.map(Serialization.parse),
       stats: response.stats,
     });
   }
 
-  // tslint:disable-next-line:max-func-body-length
   public evolve(): void {
     this.start();
-
-    /*
-    // bootstrap webworker script
-    var blobScript = "'use strict'\n";
-    blobScript +=
-      "var Serialization = {'stringify': " +
-      Serialization.stringify.toString() +
-      ", 'parse': " +
-      Serialization.parse.toString() +
-      "};\n";
-    blobScript += "var Clone = " + Clone.toString() + ";\n";
-
-    // make available in webworker
-    blobScript +=
-      'var Optimize = Serialization.parse("' +
-      addslashes(Serialization.stringify(Optimize)) +
-      '");\n';
-    blobScript +=
-      'var Select1 = Serialization.parse("' +
-      addslashes(Serialization.stringify(Select1)) +
-      '");\n';
-    blobScript +=
-      'var Select2 = Serialization.parse("' +
-      addslashes(Serialization.stringify(Select2)) +
-      '");\n';
-
-    // materialize our ga instance in the worker
-    blobScript +=
-      'var genetic = Serialization.parse("' +
-      addslashes(Serialization.stringify(this)) +
-      '");\n';
-    blobScript += "onmessage = function(e) { genetic.start(); }\n";
-
-    const self = this;
-
-    if (this.usingWebWorker) {
-      // webworker
-      var blob = new Blob([blobScript]);
-      var worker = new Worker(window.URL.createObjectURL(blob));
-      worker.onmessage = function(e) {
-        var response = e.data;
-        self.notification(
-          response.pop.map(Serialization.parse),
-          response.generation,
-          response.stats,
-          response.isFinished
-        );
-      };
-      worker.onerror = function(e) {
-        alert(
-          "ERROR: Line " + e.lineno + " in " + e.filename + ": " + e.message
-        );
-      };
-      worker.postMessage("");
-    } else {
-      // simulate webworker
-      (function() {
-        const onmessage: any = undefined;
-        eval(blobScript);
-        onmessage(null);
-      })();
-    }
-    */
   }
+}
+
+export interface Notification<Entity> {
+  population: Population<Entity>;
+  generation: number;
+  stats: Stats;
+  isFinished: boolean;
+}
+
+export interface GeneticState<Entity> {
+  population: Population<Entity>;
+  generation: number;
+  stats: Stats;
 }

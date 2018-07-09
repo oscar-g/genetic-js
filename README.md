@@ -38,7 +38,7 @@ The genetic-js interface exposes a few simple concepts and primitives, you just 
 | optimize(fitness, fitness) | Boolean | Yes | Determines if the first fitness score is better than the second. See [Optimizer](#optimizer) section below
 | select1(population) | Individual | Yes | See [Selection](#selection) section below
 | select2(population) | Individual | Optional | Selects a pair of individuals from a population. [Selection](#selection)
-| generation(pop, gen, stats) | Boolean | Optional | Called for each generation. Return false to terminate end algorithm (ie- if goal state is reached)
+| shouldContinue(pop, gen, stats) | Boolean | Optional | Called for each generation. Return false to terminate end algorithm (ie- if goal state is reached)
 | notification(pop, gen, stats, isFinished) | Void | Optional | Runs in the calling context. All functions other than this one are run in a web worker.
 
 ## Optimizer
