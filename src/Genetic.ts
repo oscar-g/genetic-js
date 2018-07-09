@@ -90,7 +90,7 @@ export abstract class Genetic<Entity, UserData> {
     return Math.random() <= this.configuration.mutation && this.mutate
       ? this.mutate(clone(entity))
       : entity;
-  }
+  };
 
   // tslint:disable-next-line:max-func-body-length
   public async evolve(): Promise<void> {

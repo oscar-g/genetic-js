@@ -32,7 +32,9 @@ export const Select1 = {
     const firstPick = pop[Math.floor(Math.random() * popSize)];
     const secondPick = pop[Math.floor(Math.random() * popSize)];
     const thirdPick = pop[Math.floor(Math.random() * popSize)];
-    let best = this.optimize(firstPick.fitness, secondPick.fitness) ? firstPick : secondPick;
+    let best = this.optimize(firstPick.fitness, secondPick.fitness)
+      ? firstPick
+      : secondPick;
     best = this.optimize(best.fitness, thirdPick.fitness) ? best : thirdPick;
     return best.entity;
   },
