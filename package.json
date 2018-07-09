@@ -2,13 +2,14 @@
   "name": "@glavin001/genetic-js",
   "version": "0.1.0",
   "description": "Advanced genetic and evolutionary algorithm library",
-  "main": "lib/genetic.js",
-  "typings": "lib/genetic.d.ts",
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
     "jest": "jest",
     "lint": "tslint '{src,test,script}/**/*.ts'",
-    "test": "npm run build && npm run jest"
+    "test": "npm run build && npm run jest",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -23,19 +24,16 @@
     "algorithm"
   ],
   "author": "Glavin Wiechert",
-  "license": "BSD",
+  "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
     "@types/jest": "^23.1.4",
     "@types/node": "^10.5.2",
-    "browserify": "~5.10.0",
     "jest": "^23.3.0",
-    "mocha": "~1.21.4",
     "ts-jest": "^23.0.0",
     "tslint": "^5.10.0",
     "tslint-clean-code": "^0.2.7",
     "tslint-microsoft-contrib": "^5.0.3",
-    "typescript": "^2.9.2",
-    "uglify-js": "~2.4.15"
+    "typescript": "^2.9.2"
   }
 }

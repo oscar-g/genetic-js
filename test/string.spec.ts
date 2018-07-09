@@ -9,7 +9,9 @@ import {
 import { Stats, Configuration, Optimize } from "../src";
 
 type Entity = string;
-type UserData = any;
+type UserData = {
+  solution: string;
+};
 
 abstract class PhraseGenetic extends Genetic.Genetic<Entity, UserData> {
   public optimize: Optimize.OptimizeFun = Genetic.Optimize.Maximize;
