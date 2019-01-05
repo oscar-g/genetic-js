@@ -1,6 +1,13 @@
 import { Serialization } from "./Serialization";
 import * as Optimize from "./Optimize";
 import { asyncLooper } from "./asyncLooper";
+import IGenetic from './interfaces/Genetic';
+import IConfiguration from './interfaces/Configuration';
+import IGeneticState from './interfaces/GeneticState';
+import IInternalGenState from './interfaces/InternalGenState';
+import INotification from './interfaces/Notification';
+import IStats from './interfaces/Stats';
+
 
 import {
   Select1,
@@ -9,27 +16,6 @@ import {
   SingleSelection,
   PairWiseSelection,
 } from "./Selection";
-
-export interface Stats {
-  maximum: number;
-  minimum: number;
-  mean: number;
-  stdev: number;
-}
-export interface Configuration {
-  size: number;
-  crossover: number;
-  mutation: number;
-  iterations: number;
-  fittestAlwaysSurvives: boolean;
-  maxResults: number;
-  webWorkers: boolean;
-  skip: number;
-}
-export interface InternalGenState {
-  rlr: number;
-  seq: number;
-}
 
 function clone(obj: any) {
   // tslint:disable-next-line:triple-equals
@@ -41,17 +27,17 @@ function clone(obj: any) {
 
 export { Optimize, Serialization, Select1, Select2 };
 
-export abstract class Genetic<Entity, UserData> {
-  protected usingWebWorker?: boolean;
+export abstract class Genetic<Entity, UserData> implements IGenetic<Entity, UserData> {
+  protected usingWebWorker!: boolean;
   private entities: Entity[] = [];
 
-  public internalGenState: InternalGenState = {
+  public internalGenState: IInternalGenState = {
     rlr: 0,
     seq: 0,
   };
-  protected readonly configuration: Configuration;
+  protected readonly configuration: IConfiguration;
   constructor(
-    configuration: Partial<Configuration>,
+    configuration: Partial<IConfiguration>,
     public readonly userData: UserData
   ) {
     this.configuration = Object.assign(
@@ -61,7 +47,7 @@ export abstract class Genetic<Entity, UserData> {
     );
   }
 
-  protected defaultConfiguration: Configuration = {
+  protected defaultConfiguration: IConfiguration = {
     crossover: 0.9,
     fittestAlwaysSurvives: true,
     iterations: 100,
@@ -80,8 +66,8 @@ export abstract class Genetic<Entity, UserData> {
     father: Entity
   ): [Entity, Entity];
   protected abstract fitness(entity: Entity): number | Promise<number>;
-  protected abstract shouldContinue(state: GeneticState<Entity>): boolean;
-  protected abstract notification(notification: Notification<Entity>): void;
+  protected abstract shouldContinue(state: IGeneticState<Entity>): boolean;
+  protected abstract notification(notification: INotification<Entity>): void;
   protected abstract select1: SingleSelection<Entity>;
   protected abstract select2: PairWiseSelection<Entity>;
 
@@ -214,7 +200,7 @@ export abstract class Genetic<Entity, UserData> {
     generation,
     stats,
     isFinished,
-  }: Notification<Entity>) {
+  }: INotification<Entity>) {
     const response = {
       generation: generation,
       isFinished: isFinished,
@@ -232,15 +218,3 @@ export abstract class Genetic<Entity, UserData> {
   }
 }
 
-export interface Notification<Entity> {
-  population: Population<Entity>;
-  generation: number;
-  stats: Stats;
-  isFinished: boolean;
-}
-
-export interface GeneticState<Entity> {
-  population: Population<Entity>;
-  generation: number;
-  stats: Stats;
-}
