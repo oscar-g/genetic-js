@@ -1,220 +1,208 @@
-import { Serialization } from "./Serialization";
-import * as Optimize from "./Optimize";
-import { asyncLooper } from "./asyncLooper";
-import IGenetic from './interfaces/Genetic';
-import IConfiguration from './interfaces/Configuration';
-import IGeneticState from './interfaces/GeneticState';
-import IInternalGenState from './interfaces/InternalGenState';
-import INotification from './interfaces/Notification';
-import IStats from './interfaces/Stats';
-
-
-import {
-  Select1,
-  Select2,
-  Population,
-  SingleSelection,
-  PairWiseSelection,
-} from "./Selection";
+import * as Crossover from './Crossover';
+import { IConfiguration } from './interfaces/Configuration';
+import { IGenetic, Genome } from './interfaces/Genetic';
+import {IGeneticState} from './interfaces/GeneticState';
+import {IPopulation} from './interfaces/Population';
+import * as Optimize from './Optimize';
+import Population from './Population';
+import GeneticState from './GeneticState';
+import { ISelect1, ISelect2 } from './interfaces/Selector';
+import * as Mutate from './Mutation';
+import Select1Fittest from './Selection/Select1/Fittest';
+import { OptimizeFun } from './types';
+import Select1Tournament2 from './Selection/Select1/Tournament2';
+import Select2Tournament2 from './Selection/Select2/Tournament2';
+import { flip } from './util';
 
 function clone(obj: any) {
   // tslint:disable-next-line:triple-equals
-  if (obj == null || typeof obj != "object") {
+  if (obj == null || typeof obj != 'object') {
     return obj;
   }
   return JSON.parse(JSON.stringify(obj));
 }
 
-export { Optimize, Serialization, Select1, Select2 };
+export const defaultConfiguration: IConfiguration = {
+  crossover: 0.9,
+  fittestAlwaysSurvives: true,
+  iterations: 10,
+  mutation: 0.2,
+  popSize: 100,
+  chromosomeSize: 10,
+  enableNotification: false,
+};
 
-export abstract class Genetic<Entity, UserData> implements IGenetic<Entity, UserData> {
-  protected usingWebWorker!: boolean;
-  private entities: Entity[] = [];
+export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
+  public readonly state!: IGeneticState;
+  public readonly configuration!: IConfiguration;
 
-  public internalGenState: IInternalGenState = {
-    rlr: 0,
-    seq: 0,
-  };
-  protected readonly configuration: IConfiguration;
+  /** @see initSelect() */
+  public select1!: ISelect1<Entity>;
+  public select2!: ISelect2<Entity>;
+  public selectFittest!: ISelect1<Entity>;
+  
+  /** @see storePopulation() */
+  public readonly populations: { [gen: number]: IPopulation } = {};
+
+  public readonly optimize = Optimize.Max;
+  public readonly crossover = Crossover.Simple;
+  public readonly mutate = Mutate.Noop;
+  public readonly select1Class: new (state: IGeneticState, optimize: OptimizeFun) => ISelect1<Entity> = Select1Tournament2;
+  public readonly select2Class: new (state: IGeneticState, optimize: OptimizeFun) => ISelect2<Entity> = Select2Tournament2;
+
+  public abstract seed(): Entity;
+  public abstract fitness(entity: Entity): Promise<number>;
+  public abstract toGenome(entity: Entity): Genome;
+  public abstract fromGenome(genome: Genome): Entity;
+
+  /**
+   * @todo check final config values, raise ArgumentError
+   */
   constructor(
-    configuration: Partial<IConfiguration>,
-    public readonly userData: UserData
+    configuration?: Partial<IConfiguration>,
+    public readonly userData?: UserData
   ) {
-    this.configuration = Object.assign(
-      {},
-      this.defaultConfiguration,
-      configuration
-    );
+    this.configuration = { ...defaultConfiguration, ...configuration };
+    this.state = new GeneticState([]);
+
+    this.initSelect();
   }
 
-  protected defaultConfiguration: IConfiguration = {
-    crossover: 0.9,
-    fittestAlwaysSurvives: true,
-    iterations: 100,
-    maxResults: 100,
-    mutation: 0.2,
-    size: 250,
-    skip: 0,
-    webWorkers: true,
-  };
+  /**
+   * Check if the loop should continue.
+   */
+  public shouldContinue() {
+    return this.state.generation < this.configuration.iterations;
+  }
 
-  public abstract optimize: Optimize.OptimizeFun;
-  protected abstract seed(): Entity;
-  protected abstract mutate(entity: Entity): Entity;
-  protected abstract crossover(
-    mother: Entity,
-    father: Entity
-  ): [Entity, Entity];
-  protected abstract fitness(entity: Entity): number | Promise<number>;
-  protected abstract shouldContinue(state: IGeneticState<Entity>): boolean;
-  protected abstract notification(notification: INotification<Entity>): void;
-  protected abstract select1: SingleSelection<Entity>;
-  protected abstract select2: PairWiseSelection<Entity>;
-
-  private mutateOrNot = (entity: Entity) => {
-    // applies mutation based on mutation probability
-    return Math.random() <= this.configuration.mutation && this.mutate
-      ? this.mutate(clone(entity))
-      : entity;
-  };
-
-  // tslint:disable-next-line:max-func-body-length
-  public async evolve(): Promise<void> {
-    // seed the population
-    for (let currSeed = 0; currSeed < this.configuration.size; ++currSeed) {
-      this.entities.push(clone(this.seed()));
+  /**
+   * Evolve the model until completion.
+   */
+  public async evolve() {
+    /**
+     * Always check the stop condition before modifying state.
+    */
+    if (!this.shouldContinue()) {
+      return Promise.resolve(this);
+      // return Promise.reject('should not continue (evolve:begin)');//, this.populations, this.state.generation]);
     }
 
-    return await asyncLooper(
-      currIteration => {
-        return currIteration < this.configuration.iterations;
-      },
-      // tslint:disable-next-line:max-func-body-length
-      async (currIteration, breakFn) => {
-        try {
-          // reset for each generation
-          this.internalGenState = {
-            rlr: 0,
-            seq: 0,
-          };
+    /**
+     * Get entities randomly or by mutating the last gen
+     */
+    this.state.setEntities(this.getEntities());
 
-          // score and sort
-          const pop = await Promise.all(
-            this.entities.map(async entity => {
-              const fitness = await this.fitness(entity);
-              return { fitness, entity: entity };
-            })
-          ).then(unsortedPopulation => {
-            return unsortedPopulation.sort((entityA, entityB) => {
-              return this.optimize(entityA.fitness, entityB.fitness) ? -1 : 1;
-            });
-          });
+    /** Bump generation counter */
+    this.state.incGen();
 
-          // generation notification
-          const mean =
-            pop.reduce((currMean, popItem) => {
-              return currMean + popItem.fitness;
-            }, 0) / pop.length;
-          const stdev = Math.sqrt(
-            pop
-              .map(popItem => {
-                return (popItem.fitness - mean) * (popItem.fitness - mean);
-              })
-              .reduce((currStdev, popItem) => {
-                return currStdev + popItem;
-              }, 0) / pop.length
-          );
+    /**
+     * Generate the Population class by calculating fitness on each entity
+     *
+     * @todo test error in fitness or sorting fuunction
+     */
+    const population = await Promise.all(this.state.entities.map(async (entity) => {
+      const fitness = await this.fitness(entity);
 
-          const stats = {
-            maximum: pop[0].fitness,
-            mean: mean,
-            minimum: pop[pop.length - 1].fitness,
-            stdev: stdev,
-          };
+      return { fitness, entity };
+    })).then(unsortedEntities => {
+      /**
+       * Sort with optimize function
+       */
+      const entities = unsortedEntities.sort((entityA, entityB) => {
+        return this.optimize(entityA.fitness, entityB.fitness) ? -1 : 1;
+      });
+      return new Population(entities);
+    });
 
-          const shouldContinue = this.shouldContinue
-            ? this.shouldContinue({
-                generation: currIteration,
-                population: pop,
-                stats,
-              })
-            : true;
-          const isFinished =
-            !shouldContinue ||
-            currIteration === this.configuration.iterations - 1;
+    this.storePopulation(population);
 
-          const shouldSendNotification: boolean =
-            this.notification &&
-            (isFinished ||
-              this.configuration.skip === 0 ||
-              currIteration % this.configuration.skip === 0);
-          if (shouldSendNotification) {
-            this.sendNotification({
-              generation: currIteration,
-              isFinished,
-              population: pop.slice(0, this.configuration.maxResults),
-              stats,
-            });
-          }
+    /** Reset state */
+    this.state.resetSelection();
 
-          if (isFinished) {
-            breakFn();
-            return;
-          }
-
-          // crossover and mutate
-          const newPop = [];
-
-          if (this.configuration.fittestAlwaysSurvives) {
-            // lets the best solution fall through
-            newPop.push(pop[0].entity);
-          }
-
-          while (newPop.length < this.configuration.size) {
-            if (
-              this.crossover && // if there is a crossover function
-              Math.random() <= this.configuration.crossover && // base crossover on specified probability
-              newPop.length + 1 < this.configuration.size // keeps us from going 1 over the max population size
-            ) {
-              const parents = this.select2(pop);
-              const children = this.crossover(
-                clone(parents[0]),
-                clone(parents[1])
-              ).map(this.mutateOrNot);
-              newPop.push(children[0], children[1]);
-            } else {
-              newPop.push(this.mutateOrNot(this.select1(pop)));
-            }
-          }
-          this.entities = newPop;
-        } catch (error) {
-          console.error(error);
-          return Promise.reject(error);
-        }
-      }
-    );
+    return this.notify().then<this>(this.evolve.bind(this));
   }
 
-  private sendNotification({
-    population,
-    generation,
-    stats,
-    isFinished,
-  }: INotification<Entity>) {
-    const response = {
-      generation: generation,
-      isFinished: isFinished,
-      population: population.map(Serialization.stringify),
-      stats: stats,
-    };
+  public notify() {
+    if (this.configuration.enableNotification === true) {
+      // console.debug("Genetic#notify", this.state);
+    }
 
-    // self declared outside of scope
-    this.notification({
-      generation: response.generation,
-      isFinished: response.isFinished,
-      population: response.population.map(Serialization.parse),
-      stats: response.stats,
-    });
+    return Promise.resolve();
+  }
+
+  public shouldMutate() {
+    return Math.random() <= this.configuration.mutation;
+  }
+
+  public shouldCrossover(populationSize: number) {
+    return (populationSize + 2 < this.configuration.popSize) && flip(this.configuration.crossover);
+  }
+
+  ////
+
+  private initSelect() {
+    this.select1 = new this.select1Class(this.state, this.optimize);
+    this.select2 = new this.select2Class(this.state, this.optimize);
+    this.selectFittest = new Select1Fittest(this.state, this.optimize);
+  }
+
+  private mutateOrNot(entity: Entity): Entity {
+    if (this.shouldMutate()) {
+      const g = this.toGenome(entity);
+
+      return this.fromGenome(this.mutate(g));
+    }
+
+    return entity;
+  }
+
+  private getEntities(): Entity[] {
+    if (this.state.generation < 1) {
+      return this.seedInitialRandomEntities();
+    } else {
+      return this.seedFromLastPopulation();
+    }
+  }
+
+  private seedInitialRandomEntities(): Entity[] {
+    const entities = [];
+    for (let currSeed = 0; currSeed < this.configuration.popSize; ++currSeed) {
+
+      entities.push(clone(this.seed()));
+    }
+
+    return entities;
+  }
+
+  private seedFromLastPopulation(): Entity[] {
+    const newPop = [];
+    const $p = Object.keys(this.populations).pop() || 0;
+    const pop = this.populations[$p as number];
+
+    if (this.configuration.fittestAlwaysSurvives) {
+      // lets the best solution fall through
+      newPop.push(this.selectFittest.select(pop));
+    }
+
+    while (newPop.length < this.configuration.popSize) {
+      if (this.shouldCrossover(newPop.length)) {
+        const [p1, p2] = this.select2.select(pop).map(this.toGenome);
+        const [c1, c2] = this.crossover(p1, p2, this.configuration.chromosomeSize)
+          .map(this.fromGenome)
+          .map(this.mutateOrNot.bind(this));
+
+        newPop.push(c1, c2);
+      } else {
+        newPop.push(this.mutateOrNot(this.select1.select(pop)));
+      }
+    }
+
+    return newPop;
+  }
+
+  private storePopulation(population: IPopulation): IPopulation {
+    this.populations[this.state.generation] = population;
+
+    return population;
   }
 }
-

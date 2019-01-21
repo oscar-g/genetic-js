@@ -1,1 +1,1 @@
-export * from "./Genetic";
+export * from './Genetic';

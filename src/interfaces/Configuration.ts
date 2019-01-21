@@ -1,10 +1,20 @@
-export default interface Configuration {
-  size: number;
+/**
+ * static config values
+ */
+export interface IConfiguration {
+  /**
+   * [1-Infinity]
+   */
+  popSize: number;
+  chromosomeSize: number;
+  iterations: number;
+
+  /**
+   * [0-100]
+   */
   crossover: number;
   mutation: number;
-  iterations: number;
+
   fittestAlwaysSurvives: boolean;
-  maxResults: number;
-  webWorkers: boolean;
-  skip: number;
+  enableNotification: boolean;
 }

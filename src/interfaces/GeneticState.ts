@@ -1,5 +1,19 @@
-export default interface GeneticState<Entity> {
-  population: Population<Entity>;
+/* tslint:disable:no-any */
+import { ISelectionState } from './SelectionState';
+
+/**
+ * Keep root state for a genetic algo. at a specified generation
+ *
+ * @todo type parameter Entity ???
+ */
+export interface IGeneticState {
+  entities: any[];
   generation: number;
-  stats: Stats;
+  selection: ISelectionState;
+
+  incGen(): number;
+  setEntities(entities: any[]): void;
+  incSelection(name: keyof ISelectionState): number;
+  setSelection(name: keyof ISelectionState, value: number): number;
+  resetSelection(): void;
 }

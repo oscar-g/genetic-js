@@ -25,8 +25,7 @@
     "rootDir": "."
   },
   "include": [
-    "scripts/**/*",
     "src/**/*",
-    "test/**/*"
+    "examples/*.ts"
   ]
 }
