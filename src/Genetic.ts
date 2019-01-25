@@ -23,13 +23,13 @@ function clone(obj: any) {
 }
 
 export const defaultConfiguration: IConfiguration = {
-  crossover: 0.9,
+  crossover: 90,
   fittestAlwaysSurvives: true,
   iterations: 10,
-  mutation: 0.2,
+  mutation: 20,
   popSize: 100,
   chromosomeSize: 10,
-  enableNotification: false,
+  enableNotification: true,
 };
 
 export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
@@ -124,7 +124,7 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
 
   public notify() {
     if (this.configuration.enableNotification === true) {
-      // console.debug("Genetic#notify", this.state);
+      // console.debug("Genetic#notify", this.state.generation, '\n', this.state.entities);
     }
 
     return Promise.resolve();

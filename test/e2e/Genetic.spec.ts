@@ -4,16 +4,18 @@ import { IConfiguration } from '../../src/interfaces/Configuration';
 
 /** pass-through: no mutation or crossover */
 const config1: Partial<IConfiguration> = {
-  crossover: 0,
-  mutation: 0,
+  crossover: 90,
+  mutation: 10,
   iterations: 10,
+  chromosomeSize: 5,
+  popSize: 20,
 };
 
 const getGA = (conf?: Partial<IConfiguration>) => {
   return new TestGA(conf);
 }
 
-describe.only('Example 1: pass-through', () => {
+describe('e2e Example 1', () => {
   it('runs without error ', (done) => {
     getGA(config1).evolve().then((ga) => {
       expect(ga).not.be.undefined;
@@ -40,5 +42,27 @@ describe.only('Example 1: pass-through', () => {
     }).catch((e) => {
       done(e);
     });
+  });
+
+  it('converges to the known value', (done) => {
+    getGA(config1).evolve().then((ga) => {
+      const known = 5;
+      const statsInit = ga.populations[1].stats;
+      const statsFinal = ga.populations[10].stats;
+
+      // console.log(statsInit, statsFinal)
+      
+      expect(statsInit.min).lt(known);
+      expect(statsInit.max).lte(known);
+      expect(statsInit.mean).lt(known);
+      expect(statsInit.stdev).gt(0);
+
+      expect(statsFinal.min).eq(known);
+      expect(statsFinal.max).eq(known);
+      expect(statsFinal.mean).eq(known);
+      expect(statsFinal.stdev).eq(0);
+
+      done();
+    }).catch(_ => done(_));
   });
 });

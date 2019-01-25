@@ -1,3 +1,5 @@
+import { IStats } from './Stats';
+
 /**
  * Models a population of entities
  */
@@ -7,9 +9,6 @@ export interface IPopulation {
     entity: any;
     fitness: number;
   }[];
-  length: number;
 
-  /** @todo use IStats here */
-  mean: number;
-  stdev: number;
+  stats: IStats;
 }

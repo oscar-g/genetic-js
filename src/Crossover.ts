@@ -3,7 +3,7 @@ import { randomInt } from './util';
 import { CrossoverFun } from './types';
 
 function cut(a: Genome, pt: number): [Genome, Genome] {
-  return [a.splice(0, pt), a.splice(pt)];
+  return [a.slice(0, pt), a.slice(pt)];
 }
 
 export const Simple: CrossoverFun = (e1, e2, s: number) => {
@@ -12,7 +12,8 @@ export const Simple: CrossoverFun = (e1, e2, s: number) => {
   const [e2g1, e2g2] = cut(e2, pt);
 
   return [
-    (e1g1 as any[]).concat(e2g2 as any[]),
-    (e2g1 as any[]).concat(e1g2 as any[]),
+    (e1g1).concat(e2g2),
+    (e2g1).concat(e1g2),
   ];
 };
+ 

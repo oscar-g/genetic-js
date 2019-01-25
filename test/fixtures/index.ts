@@ -1,5 +1,5 @@
 import { Genetic } from './../../src/Genetic';
-import { randomSetFromSet } from './../../src/util';
+import { randomSetFromSet, randomInt } from './../../src/util';
 
 export interface Model {
   id: number,
@@ -9,7 +9,7 @@ export interface Model {
 export default class TestGA extends Genetic<Model, null> {
   seed() {
     return {
-      id: new Date().getTime(),
+      id: randomInt(1000),
       genome: randomSetFromSet([0, 1], this.configuration.chromosomeSize),
     };
   }
@@ -27,11 +27,3 @@ export default class TestGA extends Genetic<Model, null> {
     genome, 
   });
 }
-
-// const ga = new Test(config, null);
-
-// ga.evolve().then(x => {
-//   console.info('GA DONE!', x);
-// }, x => {
-//   console.error('GA ERROR:', x);
-// });

@@ -19,7 +19,7 @@ export abstract class Selector<Entity> implements ISelector<Entity> {
   ) {}
 
   protected randomWithFitness(pop: Population<Entity>): [Entity, number] {
-    const x = pop.entities[randomInt(pop.length)];
+    const x = pop.entities[randomInt(pop.stats.size)];
 
     return [x.entity, x.fitness];
   }

@@ -1,6 +1,7 @@
-export default interface Stats {
-  maximum: number;
-  minimum: number;
+export interface IStats {
+  size: number;
+  max: number;
+  min: number;
   mean: number;
   stdev: number;
 }

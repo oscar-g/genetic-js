@@ -1,4 +1,4 @@
-import IStats from './Stats';
+import { IStats } from './Stats';
 import { IPopulation } from './Population';
 
 export default interface Notification<Entity> {

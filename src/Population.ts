@@ -1,15 +1,15 @@
-import * as math from 'mathjs';
+import * as ss from 'simple-statistics';
 
 import { IPopulation } from './interfaces/Population';
+import { IStats } from './interfaces/Stats';
+
 /**
  * 
  */
 // export type FitnessFn = (entity: any) => Promise<number>;
 
 export default class Population<Entity> implements IPopulation {
-  public length!: number;
-  public mean!: number;
-  public stdev!: number;
+  public stats!: IStats;
 
   constructor(
     public entities: {
@@ -17,22 +17,14 @@ export default class Population<Entity> implements IPopulation {
       fitness: number
     }[]
   ) {
-    this.length = this.entities.length;
+    const f = this.entities.map(_ => _.fitness);
 
-    const sum: number = this.entities.reduce((currMean, popItem) => {
-      // return math.add(currMean, popItem.fitness);
-      return currMean.add(popItem.fitness);
-    }, math.chain(3)).done();
-
-    this.mean = math.divide(sum, this.length);
-
-    this.stdev = Math.sqrt(
-      this.entities.map(popItem => {
-        return (popItem.fitness - this.mean) * (popItem.fitness - this.mean);
-      })
-      .reduce((currStdev, popItem) => {
-        return currStdev + popItem;
-      },      0) / this.length
-    );
+    this.stats = {
+      size: f.length,
+      min: ss.min(f),
+      max: ss.max(f),
+      mean: ss.mean(f),
+      stdev: ss.standardDeviation(f),
+    };
   }
 }[];

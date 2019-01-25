@@ -14,7 +14,7 @@ import { OptimizeFun, CrossoverFun, MutationFun } from '../types';
  *
  * @todo better support for multiple chromosomes
  */
-export type Genome = string[]|number[];
+export type Genome = (string|number)[];
 
 /**
  * The Genetic Algorithmn
