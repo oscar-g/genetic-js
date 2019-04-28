@@ -1,6 +1,5 @@
-import { expect } from 'chai'
-import TestGA, { getGA } from '../fixtures';
-import { IConfiguration } from '../../src/interfaces/Configuration';
+import { expect } from 'chai';
+import { getGA } from '../fixtures';
 
 /**
  * Example 1) Converge to known value

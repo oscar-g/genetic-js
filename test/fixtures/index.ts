@@ -27,8 +27,6 @@ export default class TestGA extends Genetic<Model, null> {
     id: new Date().getTime(),
     genome, 
   });
-
-  static example1Config: Partial<IConfiguration> = ;
 }
 
 export const configs = {

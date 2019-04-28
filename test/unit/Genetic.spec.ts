@@ -4,11 +4,12 @@ import * as sinon from 'sinon';
 import TestGA, { getGA } from '../fixtures';
 
 const testMethodCallCount = (ga, subject, method, expectedCount, op = 'eq') => {
-  sinon.replace((subject || ga), method, sinon.fake());
+  sinon.spy((subject || ga), method);
 
   return ga.evolve().then(() => {
     expect((subject || ga)[method].callCount)[op](expectedCount);
-    
+    (subject || ga)[method].restore();
+
     return;
   });
 }
@@ -16,7 +17,7 @@ const testMethodCallCount = (ga, subject, method, expectedCount, op = 'eq') => {
 /**
  * Tests the overall structure and flow of the algorithm
  */
-describe.skip('class: Genetic', () => {
+describe('class: Genetic', () => {
   let ga: TestGA;
   
   beforeEach(() => {
@@ -37,17 +38,21 @@ describe.skip('class: Genetic', () => {
       afterEach(() => sinon.restore());
 
       it('increases the generation number', done => {
-        testMethodCallCount(ga, ga.state, 'incGen', ga.configuration.iterations).then(done);
+        testMethodCallCount(ga, ga.state, 'incGen', ga.configuration.iterations).then(done).catch(done);
       });
 
-      it('creates new entities', done => {
-        testMethodCallCount(ga, null, 'getEntities', ga.configuration.iterations).then(done);
-        testMethodCallCount(ga, null, 'seedInitialRandomEntities', 1).then(done);
-        testMethodCallCount(ga, null, 'seedFromLastPopulation', ga.configuration.iterations - 1).then(done);
+      it('seeds new entities, once', done => {
+        testMethodCallCount(ga, null, 'seedInitialRandomEntities', 1)
+          .then(done).catch(done);
+      });
+
+      it('seeds from the last population', done => {
+        testMethodCallCount(ga, null, 'seedFromLastPopulation', ga.configuration.iterations - 1)
+          .then(done).catch(done);
       });
 
       it('resets selection pointers', done => {
-        testMethodCallCount(ga, ga.state, 'resetSelection', ga.configuration.iterations).then(done);
+        testMethodCallCount(ga, ga.state, 'resetSelection', ga.configuration.iterations).then(done).catch(done);
       });
 
       it('calculates the fitness of each entity', done => {
@@ -55,11 +60,11 @@ describe.skip('class: Genetic', () => {
          * @todo do not assume every generation has fully-stocked population
          */
 
-        testMethodCallCount(ga, null, 'fitness', ga.configuration.iterations * ga.configuration.popSize).then(done);
+        testMethodCallCount(ga, null, 'fitness', ga.configuration.iterations * ga.configuration.popSize).then(done).catch(done);
       });
 
       it('sorts entities using configured opimization function', done => {
-        testMethodCallCount(ga, null, 'optimize', 0, 'gt').then(done);
+        testMethodCallCount(ga, null, 'optimize', 0, 'gt').then(done).catch(done);
       });
 
       it('emits events on state changes');
@@ -81,7 +86,8 @@ describe.skip('class: Genetic', () => {
             expect(g).instanceOf(TestGA);
 
             done();
-          });
+          })
+          .catch(done);
         });
       });
     });

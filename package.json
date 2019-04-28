@@ -11,7 +11,9 @@
     "prebuild": "rm -rf dist",
     "build": "tsc -p ./",
     "lint": "tslint 'src/**/*.ts'",
-    "test": "mocha -r ts-node/register test/**/*.spec.ts",
+    "test:e2e": "mocha dist/test/e2e/*.spec.js",
+    "test:unit": "mocha dist/test/unit/*.spec.js",
+    "test": "npm run test:e2e && npm run test:unit",
     "prepack": "npm run build"
   },
   "repository": {

@@ -5,7 +5,7 @@ export const Maximize: OptimizeFun = (first: number, second: number) => {
 };
 
 export const Minimize: OptimizeFun = (first: number, second: number) => {
-  return first < second;
+  return first <= second;
 };
 
 export const Max = Maximize;

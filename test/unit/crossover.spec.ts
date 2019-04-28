@@ -36,10 +36,8 @@ describe('Crossover functions', () => {
     it('returns genomes of the same length as the parents', () => {
       const g1: Genome = randomSetFromSet(['a', 'a'], 10);
       const g2: Genome = randomSetFromSet(['x', 'x'], 10);
-
       const [a, b] = Crossover.kPoint(2)(g1, g2, g1.length);
-      console.log(0, [g1, g2])
-      console.log(1, [a, b]);
+
       expect(a.length).eq(10);
       expect(b.length).eq(10);
     });

@@ -14,14 +14,6 @@ import Select1Tournament2 from './Selection/Select1/Tournament2';
 import Select2Tournament2 from './Selection/Select2/Tournament2';
 import { flip } from './util';
 
-function clone(obj: any) {
-  // tslint:disable-next-line:triple-equals
-  if (obj == null || typeof obj != 'object') {
-    return obj;
-  }
-  return JSON.parse(JSON.stringify(obj));
-}
-
 export const defaultConfiguration: IConfiguration = {
   crossover: 90,
   fittestAlwaysSurvives: true,
@@ -32,6 +24,9 @@ export const defaultConfiguration: IConfiguration = {
   enableNotification: true,
 };
 
+/**
+ * Prototype for genetic Algorithm.
+ */
 export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
   public readonly state!: IGeneticState;
   public readonly configuration!: IConfiguration;
@@ -44,6 +39,8 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
   /** @see storePopulation() */
   public readonly populations: { [gen: number]: IPopulation } = {};
 
+  /** @todo move all operators to the configuration */
+  /** @todo "clone" operator */
   public readonly optimize = Optimize.Max;
   public readonly crossover = Crossover.Simple;
   public readonly mutate = Mutate.Noop;
@@ -66,6 +63,8 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
     this.state = new GeneticState([]);
 
     this.initSelect();
+
+    return this;
   }
 
   /**
@@ -77,6 +76,8 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
 
   /**
    * Evolve the model until completion.
+   * 
+   * this should be the only public function that modifies state
    */
   public async evolve() {
     /**
@@ -84,7 +85,6 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
     */
     if (!this.shouldContinue()) {
       return Promise.resolve(this);
-      // return Promise.reject('should not continue (evolve:begin)');//, this.populations, this.state.generation]);
     }
 
     /**
@@ -119,12 +119,13 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
     /** Reset state */
     this.state.resetSelection();
 
-    return this.notify().then<this>(this.evolve.bind(this));
+    await this.notify();
+
+    return this.evolve.call(this);
   }
 
   public notify() {
     if (this.configuration.enableNotification === true) {
-      // console.debug("Genetic#notify", this.state.generation, '\n', this.state.entities);
     }
 
     return Promise.resolve();
@@ -165,17 +166,17 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
   }
 
   private seedInitialRandomEntities(): Entity[] {
-    const entities = [];
+    const entities: Entity[] = [];
     for (let currSeed = 0; currSeed < this.configuration.popSize; ++currSeed) {
 
-      entities.push(clone(this.seed()));
+      entities.push(this.seed());
     }
 
     return entities;
   }
 
   private seedFromLastPopulation(): Entity[] {
-    const newPop = [];
+    const newPop: Entity[] = [];
     const $p = Object.keys(this.populations).pop() || 0;
     const pop = this.populations[$p as number];
 
@@ -187,11 +188,11 @@ export abstract class Genetic<Entity, UserData> implements IGenetic<Entity> {
     while (newPop.length < this.configuration.popSize) {
       if (this.shouldCrossover(newPop.length)) {
         const [p1, p2] = this.select2.select(pop).map(this.toGenome);
-        const [c1, c2] = this.crossover(p1, p2, this.configuration.chromosomeSize)
+        const entities: Entity[] = this.crossover(p1, p2, this.configuration.chromosomeSize)
           .map(this.fromGenome)
           .map(this.mutateOrNot.bind(this));
 
-        newPop.push(c1, c2);
+        newPop.push(...entities);
       } else {
         newPop.push(this.mutateOrNot(this.select1.select(pop)));
       }
