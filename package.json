@@ -2,9 +2,13 @@
   "name": "@glavin001/genetic-js",
   "version": "0.2.1",
   "description": "Advanced genetic and evolutionary algorithm library",
-  "main": "dist/src/index.js",
-  "typings": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "files": [
+    "./dist"
+  ],
+  "typings": "dist/index.d.ts",
   "scripts": {
+    "prebuild": "rm -rf dist",
     "build": "tsc -p ./",
     "lint": "tslint 'src/**/*.ts'",
     "test": "mocha -r ts-node/register test/**/*.spec.ts",
