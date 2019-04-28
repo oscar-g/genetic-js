@@ -28,11 +28,19 @@ export default class TestGA extends Genetic<Model, null> {
     genome, 
   });
 
-  static example1Config: Partial<IConfiguration> = {
+  static example1Config: Partial<IConfiguration> = ;
+}
+
+export const configs = {
+  default: {
     crossover: 90,
     mutation: 10,
     iterations: 10,
     chromosomeSize: 5,
     popSize: 30,
-  };
+  },
+};
+
+export const getGA = (conf?: Partial<IConfiguration>) => {
+  return new TestGA(Object.assign({}, configs.default, conf || {}));
 }

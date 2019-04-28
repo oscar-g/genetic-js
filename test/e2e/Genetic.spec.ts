@@ -1,10 +1,6 @@
 import { expect } from 'chai'
-import TestGA from '../fixtures';
+import TestGA, { getGA } from '../fixtures';
 import { IConfiguration } from '../../src/interfaces/Configuration';
-
-const getGA = (conf?: Partial<IConfiguration>) => {
-  return new TestGA(Object.assign({}, TestGA.example1Config, conf || {}));
-}
 
 /**
  * Example 1) Converge to known value
