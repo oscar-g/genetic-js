@@ -1,5 +1,6 @@
 import { Genetic } from './../../src/Genetic';
 import { randomSetFromSet, randomInt } from './../../src/util';
+import { IConfiguration } from '../../src/interfaces/Configuration';
 
 export interface Model {
   id: number,
@@ -26,4 +27,12 @@ export default class TestGA extends Genetic<Model, null> {
     id: new Date().getTime(),
     genome, 
   });
+
+  static example1Config: Partial<IConfiguration> = {
+    crossover: 90,
+    mutation: 10,
+    iterations: 10,
+    chromosomeSize: 5,
+    popSize: 30,
+  };
 }

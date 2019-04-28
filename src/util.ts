@@ -6,6 +6,10 @@ export const flip = (bias: number = 50): boolean => {
     return (Math.random() * 100) < bias;
   };
 
+/**
+ * Random integer from 0, up to, but not including, ceiling
+ * [0, ceil)
+ */
 export const randomInt = (ceil: number) => {
   return Math.floor(ceil * Math.random());
 }

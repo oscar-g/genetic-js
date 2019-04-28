@@ -1,1 +1,3 @@
-export * from './Genetic';
+import { Genetic } from './Genetic';
+
+export default Genetic;

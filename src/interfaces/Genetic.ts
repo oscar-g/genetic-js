@@ -2,22 +2,12 @@ import { IConfiguration } from './Configuration';
 import { IGeneticState } from './GeneticState';
 import { ISelect1, ISelect2 } from './Selector';
 import { Encoder } from '../Encoder';
-import { OptimizeFun, CrossoverFun, MutationFun } from '../types';
+import { OptimizeFun, CrossoverFun, MutationFun, Genome } from '../types';
+
+export { Genome } from './../types';
 
 /**
- * A flexible genome definition.
- * 
- * Can model base pairs in a single-chromosome genomes with 
- * an array of individual strings or numbers.
- * 
- * Possible to model multiple chromosomes with an array of delimited strings
- *
- * @todo better support for multiple chromosomes
- */
-export type Genome = (string|number)[];
-
-/**
- * The Genetic Algorithmn
+ * The Genetic Algorithm
  */
 export interface IGenetic<Entity> {
   state: IGeneticState;

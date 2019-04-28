@@ -2,22 +2,19 @@ import { expect } from 'chai'
 import TestGA from '../fixtures';
 import { IConfiguration } from '../../src/interfaces/Configuration';
 
-/** pass-through: no mutation or crossover */
-const config1: Partial<IConfiguration> = {
-  crossover: 90,
-  mutation: 10,
-  iterations: 10,
-  chromosomeSize: 5,
-  popSize: 20,
-};
-
 const getGA = (conf?: Partial<IConfiguration>) => {
-  return new TestGA(conf);
+  return new TestGA(Object.assign({}, TestGA.example1Config, conf || {}));
 }
 
+/**
+ * Example 1) Converge to known value
+ * 
+ * Maximize random binary genome
+ * 
+ */
 describe('e2e Example 1', () => {
   it('runs without error ', (done) => {
-    getGA(config1).evolve().then((ga) => {
+    getGA().evolve().then((ga) => {
       expect(ga).not.be.undefined;
       expect(ga).not.eq(null);
 
@@ -26,7 +23,7 @@ describe('e2e Example 1', () => {
   });
 
   it('stores 10 generations', (done) => {
-    getGA(config1).evolve().then((ga) => {
+    getGA().evolve().then((ga) => {
       const pop  = ga.populations
 
       expect(pop).not.be.undefined;
@@ -45,7 +42,7 @@ describe('e2e Example 1', () => {
   });
 
   it('converges to the known value', (done) => {
-    getGA(config1).evolve().then((ga) => {
+    getGA().evolve().then((ga) => {
       const known = 5;
       const statsInit = ga.populations[1].stats;
       const statsFinal = ga.populations[10].stats;
