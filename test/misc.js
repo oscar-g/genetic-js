@@ -44,23 +44,6 @@ describe("Clone", function() {
 	
 });
 
-
-describe("Optimize", function() {
-	
-	it("Minimize", function () {
-		assert.equal(Genetic.Optimize.Minimize(1,2), true);
-		assert.equal(Genetic.Optimize.Minimize(2,1), false);
-		assert.equal(Genetic.Optimize.Minimize(2,2), false);
-	});
-	
-	it("Maximize", function () {
-		assert.equal(Genetic.Optimize.Maximize(1,2), false);
-		assert.equal(Genetic.Optimize.Maximize(2,1), true);
-		assert.equal(Genetic.Optimize.Maximize(2,2), true);
-	});
-	
-});
-
 describe("Selection", function() {
 	
 	it("Tournament2", function (done) {

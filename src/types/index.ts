@@ -17,7 +17,5 @@ export type Genome = (string|number)[];
  */
 export type CrossoverFun = (a: Genome, b: Genome, chrSize: number) => [Genome, Genome];
 
-/** @todo maybe rework to support array of fitness values and output the winning index */
-export type OptimizeFun = (fitnessA: number, fitnessB: number) => boolean;
 
 export type MutationFun = (a: Genome) => Genome;
