@@ -1,6 +1,6 @@
-import Optimizer from './Optimizer';
+import Optimizer from "./Optimizer";
 
-const Max: Optimizer = (first: number, second: number) => {
+export const Max: Optimizer = (first: number, second: number) => {
   return first >= second;
 };
 

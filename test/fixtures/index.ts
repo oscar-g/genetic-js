@@ -1,13 +1,28 @@
-import { Genetic } from './../../src/Genetic';
-import { randomSetFromSet, randomInt } from './../../src/util';
-import { IConfiguration } from '../../src/interfaces/Configuration';
+import Genetic from '../../src/genetic/Genetic';
+import { Model } from '.';
+import { randomInt, randomSetFromSet } from '../../src/util';
+import IConfiguration from '../../src/genetic/IConfiguration';
 
 export interface Model {
   id: number,
   genome: number[];
 }
 
-export default class TestGA extends Genetic<Model, null> {
+export const configs = {
+  default: {
+    crossover: 90,
+    mutation: 10,
+    iterations: 10,
+    chromosomeSize: 5,
+    popSize: 30,
+  },
+};
+
+export const getGA = (conf?: Partial<IConfiguration>) => {
+  return new TestGA(Object.assign({}, configs.default, conf || {}));
+}
+
+export class TestGA extends Genetic<Model, null> {
   seed() {
     return {
       id: randomInt(1000),
@@ -27,18 +42,4 @@ export default class TestGA extends Genetic<Model, null> {
     id: new Date().getTime(),
     genome, 
   });
-}
-
-export const configs = {
-  default: {
-    crossover: 90,
-    mutation: 10,
-    iterations: 10,
-    chromosomeSize: 5,
-    popSize: 30,
-  },
-};
-
-export const getGA = (conf?: Partial<IConfiguration>) => {
-  return new TestGA(Object.assign({}, configs.default, conf || {}));
 }

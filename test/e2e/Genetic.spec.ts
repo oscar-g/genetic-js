@@ -10,8 +10,8 @@ import { getGA } from '../fixtures';
 describe('e2e Example 1', () => {
   it('runs without error ', (done) => {
     getGA().evolve().then((ga) => {
-      expect(ga).not.be.undefined;
-      expect(ga).not.eq(null);
+      expect(ga).not.eq(undefined, 'ga should not be undefined');
+      expect(ga).not.eq(null, 'ga should not be null');
 
       return done();
     }, done);
@@ -21,8 +21,8 @@ describe('e2e Example 1', () => {
     getGA().evolve().then((ga) => {
       const pop  = ga.populations
 
-      expect(pop).not.be.undefined;
-      expect(pop).not.eq(null);
+      expect(pop).not.eq(undefined, 'pop should not be undefined');
+      expect(pop).not.eq(null, 'pop should not be null');
 
       const popKeys = Object.keys(pop);
 
