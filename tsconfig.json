@@ -24,8 +24,7 @@
   },
   "include": [
     "src/**/*",
-    "test/e2e/*",
     "test/fixtures/*",
-    "test/unit/*"
+    "test/e2e/*",
   ]
 }

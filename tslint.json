@@ -1,9 +1,6 @@
 {
     "extends": [
-        "tslint-microsoft-contrib"
-    ],
-    "rulesDirectory": [
-        "node_modules/tsline-microsoft-contrib"
+        "tslint-microsoft-contrib/recommended"
     ],
     "rules": {
         "no-relative-imports": false,

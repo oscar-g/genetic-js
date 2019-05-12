@@ -1,27 +1,29 @@
 {
-  "name": "@glavin001/genetic-js",
-  "version": "0.2.1",
+  "name": "@oscar-g/genetic-js",
+  "version": "0.3.0",
   "description": "Advanced genetic and evolutionary algorithm library",
   "main": "dist/index.js",
-  "files": [
-    "./dist"
-  ],
   "typings": "dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "prebuild": "rm -rf dist",
     "build": "tsc -p ./",
-    "lint": "tslint 'src/**/*.ts'",
-    "test:e2e": "mocha dist/test/e2e/*.spec.js",
-    "test:unit": "mocha dist/test/unit/*.spec.js",
+    "postbuild": "rm -rf dist/test && mv dist/src/* dist/ && rm -rf dist/src",
+    "lint": "tslint --fix 'src/**/*.ts'",
+    "test:unit": "ts-mocha src/**/*.spec.ts",
+    "test:e2e": "ts-mocha test/e2e/*.spec.ts",
     "test": "npm run test:e2e && npm run test:unit",
     "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Glavin001/genetic-js"
+    "url": "git://github.com/oscar-g/genetic-js"
   },
   "bugs": {
-    "url": "https://github.com/Glavin001/genetic-js/issues"
+    "url": "https://github.com/oscar-g/genetic-js/issues"
   },
   "keywords": [
     "genetic",
@@ -34,19 +36,20 @@
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/mathjs": "^4.4.5",
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.18",
-    "@types/sinon": "^7.0.4",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^10.14.6",
+    "@types/sinon": "^7.0.11",
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
-    "sinon": "^7.2.3",
+    "sinon": "^7.3.2",
     "ts-jest": "^22.4.3",
+    "ts-mocha": "^6.0.0",
     "ts-node": "^7.0.1",
-    "tslint": "^5.12.1",
-    "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.2.4"
+    "tslint": "^5.16.0",
+    "tslint-microsoft-contrib": "^6.1.1",
+    "typescript": "^3.4.5"
   },
   "dependencies": {
-    "simple-statistics": "^7.0.0"
+    "simple-statistics": "^7.0.2"
   }
 }
