@@ -1,33 +1,35 @@
 # Genetic.js
 
-[![Build Status](https://travis-ci.com/Glavin001/genetic-js.svg?branch=master)](https://travis-ci.com/Glavin001/genetic-js)
-
 > Advanced genetic and evolutionary algorithm library written in TypeScript.
-> Special thanks to [Sub Protocol](http://subprotocol.com/) for writing the intial JavaScript version.
+> Special thanks to [Sub Protocol](http://subprotocol.com/) for writing the intial JavaScript version
+> and [Glavin001](https://github.com/Glavin001) for writting the typescript version.
 
-#### Rational
+### Todo
+* Documentation 
+* Better e2e & unit tests
+* publish to NPM
 
-The existing Javascript GA/EP library landscape could collectively be summed up as, meh. All that I required to take over the world was a lightweight, performant, feature-rich, nodejs + browser compatible, unit tested, and easily hackable GA/EP library. Seamless [Web Worker](http://en.wikipedia.org/wiki/Web_worker) support would be the icing on my cake.
 
-Until now, no such thing existed. Now you can have my cake, and optimize it too. Is it perfect? _Probably_. Regardless, this library is my gift to you.
+<!-- ## Entity
+The entity describes an individual of a population. The simplest entity is equivalent with the `Genome` type
+```ts
+type Entity = Genome;
 
-Have fun optimizing all your optimizations!
-
-<!--
-#### Examples
-
-* [Genetic Phrase Solver](http://subprotocol.com/system/genetic-hello-world.html)
-* [Genetic Curve Fitter](http://subprotocol.com/system/genetic-regression-curve.html)
--->
-
-#### Install
-
-```bash
-npm install @glavin001/genetic-js
+const entity1: Entity = [1, 2, 3];
+```
+A more-complicated entity requires 2 additional functions to decode the entity and encode the genome.
+```ts
+interface Entity {
+    id: number,
+    genome: Genome,
+}
+const decode: Encoder<Entity, Genome>
+const encode: Encoder<Genome, Entity>
 ```
 
-## Population Functions
+## Genetic Js -->
 
+<!-- 
 The genetic-js interface exposes a few simple concepts and primitives, you just fill in the details/features you want to use.
 
 | Function | Return Type | Required | Description
@@ -136,7 +138,7 @@ genetic.evolve();
 | fittestAlwaysSurvives | true    | Boolean     | Prevents losing the best fit between generations                                                         |
 | maxResults            | 100     | Real Number | The maximum number of best-fit results that webworkers will send per notification                        |
 | webWorkers            | true    | Boolean     | Use [Web Workers](http://en.wikipedia.org/wiki/Web_worker) (when available)                              |
-| skip                  | 0       | Real Number | Setting this higher throttles back how frequently `genetic.notification` gets called in the main thread. |
+| skip                  | 0       | Real Number | Setting this higher throttles back how frequently `genetic.notification` gets called in the main thread. | -->
 
 ## Contributing
 
